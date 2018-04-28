@@ -152,7 +152,8 @@ const languageController = (function(language) {
             description: document.querySelector('.add__description'),
             value: document.querySelector('.add__value'),
             incomeList: document.querySelector('.icome__title'),
-            expensesList: document.querySelector('.expenses__title')
+            expensesList: document.querySelector('.expenses__title'),
+            history: document.querySelector('.history__title')
         };
 
         const textbyLanguage = function(lang) {
@@ -164,6 +165,7 @@ const languageController = (function(language) {
             textElements.value.setAttribute('placeholder', lang === 'EN' ? 'Value' : 'Sumă');
             textElements.incomeList.textContent = lang === 'EN' ? 'INCOME' : 'VENITURI';
             textElements.expensesList.textContent = lang === 'EN' ? 'EXPENSES' : 'CHELTUIELI';
+            textElements.history.textContent = lang === 'EN' ? 'HISTORY' : 'ISTORIC';
         };
         textbyLanguage(language);
 
@@ -172,13 +174,29 @@ const languageController = (function(language) {
         ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
 
         const displayMonth = function(monthsArray) {
-            let now, year, month, months, language;
+            let now, year, month, language;
 
             now = new Date();
             year = now.getFullYear();
 
             month = now.getMonth();
             document.querySelector('.budget__title--month').textContent = `${monthsArray[month]} ${year}`;
+
+            const getPastMonth = function(monthsArray, month, past) {
+                let pastMonth = -1;
+                if ((month - past) >= 0) {
+                    pastMonth = month - past;
+                } else {
+                    pastMonth = monthsArray.length - Math.abs(month - past);
+                }
+                return pastMonth;
+            };
+
+            document.getElementById('month-5').textContent = `${monthsArray[getPastMonth(months, month, 5)]}`;
+            document.getElementById('month-4').textContent = `${monthsArray[getPastMonth(months, month, 4)]}`;
+            document.getElementById('month-3').textContent = `${monthsArray[getPastMonth(months, month, 3)]}`;
+            document.getElementById('month-2').textContent = `${monthsArray[getPastMonth(months, month, 2)]}`;
+            document.getElementById('month-1').textContent = `${monthsArray[getPastMonth(months, month, 1)]}`;
         };
         displayMonth(months);
     };

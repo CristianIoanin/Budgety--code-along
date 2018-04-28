@@ -198,10 +198,15 @@ body {
 .add__btn:focus { outline: none; }
 
 /***** LISTS *****/
+.history__container {
+    width: 1000px;
+    margin: 60px auto;
+}
 .container {
     width: 1000px;
     margin: 60px auto;
 }
+
 
 .income {
     float: left;
@@ -221,6 +226,7 @@ h2 {
     margin-bottom: 15px;
 }
 
+.history__title { color: #005960; }
 .icome__title { color: #28B9B5; }
 .expenses__title { color: #FF5049; }
 
@@ -287,7 +293,22 @@ h2 {
 .item:hover .item__value { transform: translateX(-20px); }
 .item:hover .item__percentage { transform: translateX(-20px); }
 
-
+.history__list {
+    display: inline-flex;
+}
+.history__item {
+    color: #005960;
+    width: 200px;
+    float: left;
+    border-top: 1px solid #e7e7e7; 
+}
+.month {
+    text-align: center;
+}
+.month:hover {
+    font-weight: 900;
+    cursor: pointer;
+}
 .unpaid {
     background-color: #FFDAD9 !important;
     cursor: pointer;
