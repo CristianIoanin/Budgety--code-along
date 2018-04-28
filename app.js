@@ -44,7 +44,7 @@ const budgetController = (function() {
             inc: 0
         },
         budget: 0,
-        percentage: -1
+        percentage: -1,
     };
 
     return {
@@ -129,6 +129,70 @@ const budgetController = (function() {
 
 })();
 
+const setOrReadLang = function() {
+    let language;
+    if (localStorage.getItem('budgety__lang')) {
+        language = localStorage.getItem('budgety__lang');
+    } else language = 'EN';
+
+    return language;
+};
+window.addEventListener('load', setOrReadLang);
+
+
+// LANGUAGE Controller
+const languageController = (function(language) {
+
+    const UILanguage = function(language) {
+
+        const textElements = {
+            title: document.querySelector('.budget__title'),
+            income: document.querySelector('.budget__income--text'),
+            expenses: document.querySelector('.budget__expenses--text'),
+            description: document.querySelector('.add__description'),
+            value: document.querySelector('.add__value'),
+            incomeList: document.querySelector('.icome__title'),
+            expensesList: document.querySelector('.expenses__title')
+        };
+
+        const textbyLanguage = function(lang) {
+            textElements.title.textContent = lang === 'EN' ? 'Available Budget in ' : 'Buget disponibil în ';
+            textElements.title.insertAdjacentHTML('beforeend', '<span class="budget__title--month">%Month%</span>');
+            textElements.income.textContent = lang === 'EN' ? 'INCOME' : 'VENITURI';
+            textElements.expenses.textContent = lang === 'EN' ? 'EXPENSES' : 'CHELTUIELI';
+            textElements.description.setAttribute('placeholder', lang === 'EN' ? 'Add description' : 'Adaugă o descriere');
+            textElements.value.setAttribute('placeholder', lang === 'EN' ? 'Value' : 'Sumă');
+            textElements.incomeList.textContent = lang === 'EN' ? 'INCOME' : 'VENITURI';
+            textElements.expensesList.textContent = lang === 'EN' ? 'EXPENSES' : 'CHELTUIELI';
+        };
+        textbyLanguage(language);
+
+        let months = language === 'EN' ?
+        ['January','February','March','April','May','June','July','August','September','October','November','December'] :
+        ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
+
+        const displayMonth = function(monthsArray) {
+            let now, year, month, months, language;
+
+            now = new Date();
+            year = now.getFullYear();
+
+            month = now.getMonth();
+            document.querySelector('.budget__title--month').textContent = `${monthsArray[month]} ${year}`;
+        };
+        displayMonth(months);
+    };
+    UILanguage(language);
+
+    const lang_setting = function(event) {
+        if (event.target.matches('.EN')) language = 'EN';
+        else if (event.target.matches('.RO')) language = 'RO';
+        localStorage.setItem('budgety__lang', language);
+        return language;
+    };
+
+    const languageSelector = document.querySelector('.language').addEventListener('click', e => UILanguage(lang_setting(e)));
+})(setOrReadLang());
 
 // UI CONTROLLER
 const UIController = (function() {
@@ -146,7 +210,6 @@ const UIController = (function() {
         percentageLabel: '.budget__expenses--percentage',
         container: '.container',
         expensesPercentageLabel: '.item__percentage',
-        dateLabel: '.budget__title--month'
     };
 
     const formatNumber = function(num, type) {
@@ -262,17 +325,6 @@ const UIController = (function() {
             });
         },
 
-        displayMonth: function() {
-            let now, year, month, months;
-
-            now = new Date();
-            year = now.getFullYear();
-
-            months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            month = now.getMonth();
-            document.querySelector(DOMStrings.dateLabel).textContent = `${months[month]} ${year}`;
-        },
-
         changedType: function() {
             let fields = document.querySelectorAll(
                 DOMStrings.inputType + ',' +
@@ -384,7 +436,7 @@ const controller = (function(budgetCtrl, UICtrl) {
 
     return {
         init: function() {
-            UICtrl.displayMonth();
+            // UICtrl.displayMonth();
             UICtrl.displayBudget({
                 budget: 0,
                 totalInc: 0,

@@ -39,6 +39,27 @@ body {
     position: relative;
 }
 
+.language {
+    margin: 5px;
+    float: right;
+}
+.RO {
+    background-image: url("ro.png");
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    width: 30px;
+    height: 20px;
+}
+.EN {
+    background-image: url("gb.png");
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    width: 30px;
+    height: 20px;
+}
+
 .budget {
     position: absolute;
     width: 350px;
