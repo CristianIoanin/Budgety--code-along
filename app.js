@@ -151,8 +151,8 @@ const languageController = (function(language) {
             expenses: document.querySelector('.budget__expenses--text'),
             description: document.querySelector('.add__description'),
             value: document.querySelector('.add__value'),
-            incomeList: document.querySelector('.icome__title'),
-            expensesList: document.querySelector('.expenses__title'),
+            incomeList: document.querySelectorAll('.icome__title'),
+            expensesList: document.querySelectorAll('.expenses__title'),
             history: document.querySelector('.history__title')
         };
 
@@ -163,8 +163,8 @@ const languageController = (function(language) {
             textElements.expenses.textContent = lang === 'EN' ? 'EXPENSES' : 'CHELTUIELI';
             textElements.description.setAttribute('placeholder', lang === 'EN' ? 'Add description' : 'Adaugă o descriere');
             textElements.value.setAttribute('placeholder', lang === 'EN' ? 'Value' : 'Sumă');
-            textElements.incomeList.textContent = lang === 'EN' ? 'INCOME' : 'VENITURI';
-            textElements.expensesList.textContent = lang === 'EN' ? 'EXPENSES' : 'CHELTUIELI';
+            textElements.incomeList.forEach(element => element.textContent = lang === 'EN' ? 'INCOME' : 'VENITURI');
+            textElements.expensesList.forEach(element => element.textContent = lang === 'EN' ? 'EXPENSES' : 'CHELTUIELI');
             textElements.history.textContent = lang === 'EN' ? 'HISTORY' : 'ISTORIC';
         };
         textbyLanguage(language);
@@ -212,6 +212,48 @@ const languageController = (function(language) {
     const languageSelector = document.querySelector('.language').addEventListener('click', e => UILanguage(lang_setting(e)));
 })(setOrReadLang());
 
+// LOCAL STORAGE Controller
+const localStorageController = (function(type, item) {
+
+    const month = new Date().getMonth();
+
+    return {
+        localSave: function(type, item) {
+            localStorage.setItem(`${month}_${type}${item.id}`, JSON.stringify(item));
+        },
+
+        localRemove: function(type, id) {
+            localStorage.removeItem(`${month}_${type}${id}`);
+        },
+
+        getLocalStorage: function(month) {
+            const arrayIncome = [];
+            const arrayExpenses = [];
+
+            for (const key in localStorage) {
+                if (key.substr(0, 5) === `${month}_inc`) {
+                    arrayIncome.push(JSON.parse(localStorage.getItem(key)));
+                } else if (key.substr(0, 5) === `${month}_exp`) {
+                    arrayExpenses.push(JSON.parse(localStorage.getItem(key)));
+                } else if (key.substr(0, 6) === `${month}_inc`) {
+                    arrayIncome.push(JSON.parse(localStorage.getItem(key)));
+                } else if (key.substr(0, 6) === `${month}_exp`) {
+                    arrayExpenses.push(JSON.parse(localStorage.getItem(key)));
+                }
+            }
+            console.log(arrayIncome);
+            console.log(arrayExpenses);
+
+            const historyEntries = {
+                oldIncome: arrayIncome,
+                oldExpenses: arrayExpenses
+            };
+
+            return historyEntries;
+        }
+    };
+})();
+
 // UI CONTROLLER
 const UIController = (function() {
 
@@ -228,6 +270,9 @@ const UIController = (function() {
         percentageLabel: '.budget__expenses--percentage',
         container: '.container',
         expensesPercentageLabel: '.item__percentage',
+        history: '.history__list',
+        incomeHistory: '#income__history',
+        expensesHistory: '#expenses__history'
     };
 
     const formatNumber = function(num, type) {
@@ -357,6 +402,47 @@ const UIController = (function() {
             document.querySelector(DOMStrings.inputBtn).classList.toggle('red');
         },
 
+        displayHistory: function(object, arrayInc, arrayExp) {
+            const element1 = DOMStrings.incomeHistory;
+            const element2 = DOMStrings.expensesHistory;
+
+            if (arrayInc.length) {
+                arrayInc.forEach(el => {
+                    document.querySelector(element1).insertAdjacentHTML('beforeend', 
+                        `
+                        <div class="item clearfix">
+                            <div class="item__description">${el.description}</div>
+                            <div class="right clearfix">
+                                <div class="item__value history__value">${formatNumber(el.value, 'inc')}</div>
+                            </div>
+                        </div>
+                        `
+                    )
+                });
+            }
+
+            if (arrayExp.length) {
+                arrayExp.forEach(el => {
+                    document.querySelector(element2).insertAdjacentHTML('beforeend', 
+                        `
+                        <div class="item clearfix">
+                            <div class="item__description">${el.description}</div>
+                            <div class="right clearfix">
+                                <div class="item__value history__value">${formatNumber(el.value, 'exp')}</div>
+                            </div>
+                        </div>
+                        `
+                    )
+                });
+            }
+
+        },
+
+        clearHistory: function() {
+            document.querySelector(DOMStrings.incomeHistory).innerHTML = '';
+            document.querySelector(DOMStrings.expensesHistory).innerHTML = '';
+        },
+
         getDOMStrings: function() {
             return DOMStrings;
         }
@@ -365,10 +451,22 @@ const UIController = (function() {
 
 
 // GLOBAL APP CONTROLLER
-const controller = (function(budgetCtrl, UICtrl) {
+const controller = (function(budgetCtrl, UICtrl, storageCtrl) {
+    const currentMonth = new Date().getMonth();
+
+    const calculateMonth = function(month, past) {
+        let pastMonth = -1;
+        if ((month - past) >= 0) {
+            pastMonth = month - past;
+        } else {
+            pastMonth = 12 - Math.abs(month - past);
+        }
+        return pastMonth;
+    };
 
     const setupEventListeners = function() {
         const DOM = UICtrl.getDOMStrings();
+        let history;
 
         document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
 
@@ -381,6 +479,26 @@ const controller = (function(budgetCtrl, UICtrl) {
         document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
 
         document.querySelector(DOM.inputType).addEventListener('change', UICtrl.changedType);
+
+        document.querySelector(DOM.history).addEventListener('click', e => {
+            if (e.target.matches('#month-5')) {
+                history = storageCtrl.getLocalStorage(calculateMonth(currentMonth, 5));
+                UICtrl.clearHistory();
+                UICtrl.displayHistory(history, history.oldIncome, history.oldExpenses);
+            } else if (e.target.matches('#month-4')) {
+                UICtrl.clearHistory();
+                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 4));
+            } else if (e.target.matches('#month-3')) {
+                UICtrl.clearHistory();
+                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 3));
+            } else if (e.target.matches('#month-2')) {
+                UICtrl.clearHistory();
+                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 2));
+            } else if (e.target.matches('#month-1')) {
+                UICtrl.clearHistory();
+                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 1));
+            } 
+        })
     };
 
     const updateBudget = function() {
@@ -413,6 +531,7 @@ const controller = (function(budgetCtrl, UICtrl) {
         if ( input.description !== '' && !isNaN(input.value) && input.value > 0 ) {
             // 2. Add the item to the budget controller
             newItem = budgetCtrl.addItem(input.type, input.description, input.value);
+            storageCtrl.localSave(input.type, newItem);
 
             // 3. Add the item to the UI
             UICtrl.addListItem(newItem, input.type);
@@ -441,6 +560,7 @@ const controller = (function(budgetCtrl, UICtrl) {
 
         // 1. Delete the item from the data structure
         budgetController.deleteItem(type, ID);
+        storageCtrl.localRemove(type, ID);
 
         // 2. Delete the item from the user interface
         UIController.deleteListItem(itemID);
@@ -464,6 +584,6 @@ const controller = (function(budgetCtrl, UICtrl) {
             setupEventListeners();
         }
     };
-})(budgetController, UIController);
+})(budgetController, UIController, localStorageController);
 
 controller.init();

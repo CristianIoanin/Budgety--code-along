@@ -247,6 +247,19 @@ h2 {
     transition: transform 0.3s;
 }
 
+.history__value:hover {
+    cursor: default;
+}
+
+.income .history__value {
+    color: #28B9B5;
+}
+
+.expenses .history__value,
+.expenses .item__percentage {
+    color: #FF5049;
+}
+
 .item__percentage {
     float: left;
     margin-left: 20px;
@@ -296,7 +309,7 @@ h2 {
 .history__list {
     display: inline-flex;
 }
-.history__item {
+#history__item {
     color: #005960;
     width: 200px;
     float: left;
@@ -304,11 +317,15 @@ h2 {
 }
 .month {
     text-align: center;
+    transition: font-weight 0.3s ease-out;
+    transition: color 0.3s ease-out;
 }
 .month:hover {
     font-weight: 900;
+    color: #28B9B5;
     cursor: pointer;
 }
+
 .unpaid {
     background-color: #FFDAD9 !important;
     cursor: pointer;
