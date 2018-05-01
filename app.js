@@ -226,27 +226,29 @@ const localStorageController = (function(type, item) {
             localStorage.removeItem(`${month}_${type}${id}`);
         },
 
+        localSaveBudget: function(budget) {
+            localStorage.setItem(`${month}_budget`, JSON.stringify(budget));
+        },
+
         getLocalStorage: function(month) {
             const arrayIncome = [];
             const arrayExpenses = [];
+            const monthBudget = [];
 
             for (const key in localStorage) {
-                if (key.substr(0, 5) === `${month}_inc`) {
+                if (key.substr(0, 5) === `${month}_inc` || key.substr(0, 6) === `${month}_inc`) {
                     arrayIncome.push(JSON.parse(localStorage.getItem(key)));
-                } else if (key.substr(0, 5) === `${month}_exp`) {
+                } else if (key.substr(0, 5) === `${month}_exp` || key.substr(0, 6) === `${month}_exp`) {
                     arrayExpenses.push(JSON.parse(localStorage.getItem(key)));
-                } else if (key.substr(0, 6) === `${month}_inc`) {
-                    arrayIncome.push(JSON.parse(localStorage.getItem(key)));
-                } else if (key.substr(0, 6) === `${month}_exp`) {
-                    arrayExpenses.push(JSON.parse(localStorage.getItem(key)));
+                } else if (key.substr(0, 8) === `${month}_budget` || key.substr(0, 9) === `${month}_budget`) {
+                    monthBudget.push(JSON.parse(localStorage.getItem(key)));
                 }
             }
-            console.log(arrayIncome);
-            console.log(arrayExpenses);
 
             const historyEntries = {
                 oldIncome: arrayIncome,
-                oldExpenses: arrayExpenses
+                oldExpenses: arrayExpenses,
+                oldBudget: monthBudget
             };
 
             return historyEntries;
@@ -255,7 +257,7 @@ const localStorageController = (function(type, item) {
 })();
 
 // UI CONTROLLER
-const UIController = (function() {
+const UIController = (function(storageCtrl) {
 
     const DOMStrings = {
         inputType: '.add__type',
@@ -272,7 +274,12 @@ const UIController = (function() {
         expensesPercentageLabel: '.item__percentage',
         history: '.history__list',
         incomeHistory: '#income__history',
-        expensesHistory: '#expenses__history'
+        expensesHistory: '#expenses__history',
+        monthsBehind5: '#past-5',
+        monthsBehind4: '#past-4',
+        monthsBehind3: '#past-3',
+        monthsBehind2: '#past-2',
+        monthsBehind1: '#past-1'
     };
 
     const formatNumber = function(num, type) {
@@ -435,7 +442,20 @@ const UIController = (function() {
                     )
                 });
             }
+        },
 
+        displayHistoryBudget: function(month, htmlElement) {
+            const budget = storageCtrl.getLocalStorage(month).oldBudget;
+            const element = document.querySelector(htmlElement);
+    
+            if (budget.length) {
+                const budgetValue = budget[0].budget;
+                element.textContent = Math.sign(budgetValue) === 1 ? formatNumber(budgetValue, 'inc') : formatNumber(budgetValue, 'exp');
+                element.style.color = '#fff';
+                Math.sign(budgetValue) === 1 ? element.classList.add('plus') : element.classList.add('minus');
+            } else {
+                element.textContent = 'N/A';
+            }
         },
 
         clearHistory: function() {
@@ -447,11 +467,12 @@ const UIController = (function() {
             return DOMStrings;
         }
     };
-})();
+})(localStorageController);
 
 
 // GLOBAL APP CONTROLLER
 const controller = (function(budgetCtrl, UICtrl, storageCtrl) {
+    const DOM = UICtrl.getDOMStrings();
     const currentMonth = new Date().getMonth();
 
     const calculateMonth = function(month, past) {
@@ -464,9 +485,19 @@ const controller = (function(budgetCtrl, UICtrl, storageCtrl) {
         return pastMonth;
     };
 
+    UICtrl.displayHistoryBudget(calculateMonth(currentMonth, 5), DOM.monthsBehind5);
+    UICtrl.displayHistoryBudget(calculateMonth(currentMonth, 4), DOM.monthsBehind4);
+    UICtrl.displayHistoryBudget(calculateMonth(currentMonth, 3), DOM.monthsBehind3);
+    UICtrl.displayHistoryBudget(calculateMonth(currentMonth, 2), DOM.monthsBehind2);
+    UICtrl.displayHistoryBudget(calculateMonth(currentMonth, 1), DOM.monthsBehind1);
+
     const setupEventListeners = function() {
-        const DOM = UICtrl.getDOMStrings();
-        let history;
+
+        const getHistory = function(monthsBehind) {
+            let history = storageCtrl.getLocalStorage(calculateMonth(currentMonth, monthsBehind));
+            UICtrl.clearHistory();
+            UICtrl.displayHistory(history, history.oldIncome, history.oldExpenses);
+        };
 
         document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
 
@@ -482,31 +513,26 @@ const controller = (function(budgetCtrl, UICtrl, storageCtrl) {
 
         document.querySelector(DOM.history).addEventListener('click', e => {
             if (e.target.matches('#month-5')) {
-                history = storageCtrl.getLocalStorage(calculateMonth(currentMonth, 5));
-                UICtrl.clearHistory();
-                UICtrl.displayHistory(history, history.oldIncome, history.oldExpenses);
+                getHistory(5);
             } else if (e.target.matches('#month-4')) {
-                UICtrl.clearHistory();
-                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 4));
+                getHistory(4);
             } else if (e.target.matches('#month-3')) {
-                UICtrl.clearHistory();
-                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 3));
+                getHistory(3);
             } else if (e.target.matches('#month-2')) {
-                UICtrl.clearHistory();
-                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 2));
+                getHistory(2);
             } else if (e.target.matches('#month-1')) {
-                UICtrl.clearHistory();
-                storageCtrl.getLocalStorage(calculateMonth(currentMonth, 1));
+                getHistory(1);
             } 
         })
     };
 
     const updateBudget = function() {
         // 1. Calculate the budget
-        budgetController.calculateBudget();
+        budgetCtrl.calculateBudget();
 
         // 2. Method to return the budget
-        const budget = budgetController.getBudget();
+        const budget = budgetCtrl.getBudget();
+        storageCtrl.localSaveBudget(budget);
 
         // 3. Display the budget on the UI
         UICtrl.displayBudget(budget);
@@ -572,15 +598,41 @@ const controller = (function(budgetCtrl, UICtrl, storageCtrl) {
         updatePercentages();
     };
 
+    
+    const readMainItems__Storage = function(object, arrayInc, arrayExp) {
+        if (arrayInc.length) {
+            arrayInc.forEach(el => {
+                budgetCtrl.addItem('inc', el.description, el.value);
+                UICtrl.addListItem(el, 'inc');
+                updateBudget();
+                updatePercentages();
+            });
+        }
+
+        if (arrayExp.length) {
+            arrayExp.forEach(el => {
+                budgetCtrl.addItem('exp', el.description, el.value);
+                UICtrl.addListItem(el, 'exp');
+                updateBudget();
+                updatePercentages();
+            });
+        }
+    };
+
     return {
         init: function() {
-            // UICtrl.displayMonth();
-            UICtrl.displayBudget({
-                budget: 0,
-                totalInc: 0,
-                totalExp: 0,
-                percentage: -1
-            });
+            const mainItems = storageCtrl.getLocalStorage(currentMonth);
+            if (mainItems) {
+                readMainItems__Storage(mainItems, mainItems.oldIncome, mainItems.oldExpenses);
+            } else {
+                UICtrl.displayBudget({
+                    budget: 0,
+                    totalInc: 0,
+                    totalExp: 0,
+                    percentage: -1
+                });
+            }
+
             setupEventListeners();
         }
     };

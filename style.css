@@ -309,21 +309,33 @@ h2 {
 .history__list {
     display: inline-flex;
 }
-#history__item {
-    color: #005960;
+.history__item {
+    padding: 13px;
+    border-bottom: 1px solid #e7e7e7;
+    color: #444;
     width: 200px;
     float: left;
-    border-top: 1px solid #e7e7e7; 
-}
-.month {
     text-align: center;
-    transition: font-weight 0.3s ease-out;
+}
+.history__item:nth-child(even) { background-color: #f7f7f7; }
+
+.month {
+    border-top: 1px solid #e7e7e7;
+    text-align: center;
+    transition: font-weight 0.3s ease;
     transition: color 0.3s ease-out;
 }
 .month:hover {
     font-weight: 900;
     color: #28B9B5;
     cursor: pointer;
+}
+
+.plus {
+    background-color: #28B9B5;
+}
+.minus {
+    background-color: #FF5049; 
 }
 
 .unpaid {
