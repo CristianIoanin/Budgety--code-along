@@ -622,7 +622,7 @@ const controller = (function(budgetCtrl, UICtrl, storageCtrl) {
     return {
         init: function() {
             const mainItems = storageCtrl.getLocalStorage(currentMonth);
-            if (mainItems) {
+            if (mainItems.oldBudget.length) {
                 readMainItems__Storage(mainItems, mainItems.oldIncome, mainItems.oldExpenses);
             } else {
                 UICtrl.displayBudget({
