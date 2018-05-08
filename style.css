@@ -317,7 +317,6 @@ h2 {
     float: left;
     text-align: center;
 }
-.history__item:nth-child(even) { background-color: #f7f7f7; }
 
 .month {
     border-top: 1px solid #e7e7e7;
